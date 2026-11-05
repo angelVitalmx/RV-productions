@@ -3,7 +3,11 @@ const track=document.getElementById("track"), slides=track.children, dots=docume
 let cur=0, timer;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 [...slides].forEach((_,i)=>{const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Ir a la diapositiva "+(i+1));b.onclick=()=>go(i,true);dots.appendChild(b);});
-function go(i,user){cur=(i+slides.length)%slides.length;track.style.transform=`translateX(-${cur*100}%)`;[...dots.children].forEach((d,j)=>d.setAttribute("aria-current",j===cur));if(user)restart();}
+// Copia de la primera diapositiva al final: de la última a la primera se sigue avanzando en lugar de regresar
+const n=slides.length, copy=slides[0].cloneNode(true);copy.inert=true;track.append(copy);
+function jump(i){track.style.transition="none";track.style.transform=`translateX(-${i*100}%)`;track.offsetWidth;track.style.transition="";}
+function go(i,user){if(reduce)i=(i+n)%n;else if(i<0){jump(n);i=n-1;}else if(cur===n&&i!==n-1){jump(0);i%=n;}cur=i;track.style.transform=`translateX(-${cur*100}%)`;[...dots.children].forEach((d,j)=>d.setAttribute("aria-current",j===cur%n));if(user)restart();}
+track.addEventListener("transitionend",e=>{if(e.target===track&&cur===n){jump(0);cur=0;}});
 function restart(){clearInterval(timer);if(!reduce)timer=setInterval(()=>go(cur+1),5000);}
 document.getElementById("prev").onclick=()=>go(cur-1,true);
 document.getElementById("next").onclick=()=>go(cur+1,true);
